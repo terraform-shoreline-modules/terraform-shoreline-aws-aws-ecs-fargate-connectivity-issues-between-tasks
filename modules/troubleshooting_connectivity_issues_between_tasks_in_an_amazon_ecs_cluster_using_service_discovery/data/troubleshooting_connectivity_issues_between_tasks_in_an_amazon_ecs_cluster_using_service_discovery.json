@@ -1,0 +1,142 @@
+{
+  "name": "troubleshooting_connectivity_issues_between_tasks_in_an_amazon_ecs_cluster_using_service_discovery",
+  "description": "This incident type involves connectivity issues between tasks in an Amazon ECS (Elastic Container Service) cluster that uses service discovery. Service discovery is a mechanism that allows services to be discovered and accessed by other services without needing to know their IP addresses. There are several potential areas to investigate when facing connectivity issues, including service discovery configuration, DNS resolution, task definition and network mode, security groups, task IAM role, VPC configuration, ECS agent, ECS service event messages, logs, application-level configuration, and health checks. Troubleshooting steps need to be taken to resolve these issues.",
+  "params": [
+    {
+      "name": "SERVICE_DISCOVERY_SERVICE_ID",
+      "value": ""
+    },
+    {
+      "name": "TASK_DEFINITION_ARN",
+      "value": ""
+    },
+    {
+      "name": "VPC_ID",
+      "value": ""
+    },
+    {
+      "name": "CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "TASK_ARN",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Troubleshooting connectivity issues between tasks in an Amazon ECS cluster using service discovery\nThis incident type involves connectivity issues between tasks in an Amazon ECS (Elastic Container Service) cluster that uses service discovery. Service discovery is a mechanism that allows services to be discovered and accessed by other services without needing to know their IP addresses. There are several potential areas to investigate when facing connectivity issues, including service discovery configuration, DNS resolution, task definition and network mode, security groups, task IAM role, VPC configuration, ECS agent, ECS service event messages, logs, application-level configuration, and health checks. Troubleshooting steps need to be taken to resolve these issues."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Confirm that the ECS service is associated with a Service Discovery namespace"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws servicediscovery get-service --id ${SERVICE_DISCOVERY_SERVICE_ID}`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if the DNS records of the tasks are correctly registered in the AWS Cloud Map service"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws servicediscovery list-instances --service-id ${SERVICE_DISCOVERY_SERVICE_ID}`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Review the task definition and check the network mode"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws ecs describe-task-definition --task-definition ${TASK_DEFINITION_ARN}`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Confirm that the tasks are launched in the expected subnets"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `aws ecs describe-tasks --tasks ${TASK_ARN} --cluster ${CLUSTER_NAME}`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Ensure health checks are correctly set up"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_ecs_service_check($TASK_DEFINITION_ARN, $CLUSTER_NAME, $TASK_ARN)"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Review security groups associated with the task or service to make sure inbound and outbound traffic is allowed between tasks"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_ecs_security_group($TASK_DEFINITION_ARN, $CLUSTER_NAME, $TASK_ARN)"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Associate the service with the service registries"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_ecs_service_discovery_association($SERVICE_DISCOVERY_SERVICE_ID, $TASK_DEFINITION_ARN, $CLUSTER_NAME, $TASK_ARN)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Enable DNS resolution for the VPC"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_enable_dns_vpc($VPC_ID)"
+    }
+  ]
+}
